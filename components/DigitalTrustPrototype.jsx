@@ -760,7 +760,10 @@ export default function DigitalTrustPrototype() {
             </div>
           )}
 
-          <footer className="footer">Team Do&apos;a Ibu - BPAD Provinsi NTT</footer>
+          <footer className="footer">
+            <div>Team Do&apos;a Ibu - BPAD Provinsi NTT</div>
+            <div className="footer-disclaimer">Prototype ini disusun khusus untuk kebutuhan hackathon.</div>
+          </footer>
         </main>
       </div>
 
@@ -769,6 +772,7 @@ export default function DigitalTrustPrototype() {
           <div className="modal-chip">Informasi Prototype</div>
           <h2>Digdaya X Hackaton Pusat Inovasi Digital Indonesia 2026</h2>
           <p>Ini adalah prototype untuk Digdaya X Hackaton Pusat Inovasi Digital Indonesia 2026.</p>
+          <p>Prototype ini disusun khusus untuk kebutuhan hackathon dan presentasi alur solusi.</p>
           <p>Segala data yang ditampilkan merupakan data dummy dan hanya digunakan untuk menyampaikan alur dari aplikasi ini.</p>
           <button className="button" onClick={() => setShowPrototypeModal(false)} type="button">
             Saya Mengerti

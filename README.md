@@ -39,3 +39,5 @@ Meningkatkan kesadaran keamanan ASN, menurunkan risiko kebocoran data, serta mem
 ## Status
 
 Prototype / MVP – PIDI DIGDAYA X Hackathon 2026
+
+Disclaimer: prototype ini disusun khusus untuk kebutuhan hackathon.
