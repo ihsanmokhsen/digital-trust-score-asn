@@ -14,6 +14,7 @@ import {
   average,
   buildRecommendations,
   calculateScore,
+  formatLocalDate,
   getRiskLevel,
   shortAgency,
   withDerivedMetrics,
@@ -56,10 +57,12 @@ export default function DigitalTrustPrototype() {
   const agencyScopedAsnList =
     currentAgency === "all" ? asnList : asnList.filter((item) => item.agency === currentAgency);
 
-  const selectedAsn =
-    asnList.find((item) => item.id === selectedAsnId && (currentAgency === "all" || item.agency === currentAgency)) ||
-    agencyScopedAsnList[0] ||
-    asnList[0];
+  const selectedAsn = isAsnRole
+    ? asnList.find((item) => item.id === currentUser?.asnId) ?? null
+    : asnList.find((item) => item.id === selectedAsnId && (currentAgency === "all" || item.agency === currentAgency)) ||
+      agencyScopedAsnList[0] ||
+      asnList[0] ||
+      null;
 
   const stats = getStats(agencyScopedAsnList);
   const assessmentSummary = getAssessmentSummary(assessmentAnswers);
@@ -158,8 +161,8 @@ export default function DigitalTrustPrototype() {
     return currentAgency === "all" ? "Semua Instansi" : currentAgency;
   }
 
-  function getDefaultSelectedAsnIdForUser(userRole) {
-    if (userRole === "ASN") return 2;
+  function getDefaultSelectedAsnIdForUser(user) {
+    if (user.role === "ASN") return user.asnId ?? null;
     return asnList[0]?.id ?? 1;
   }
 
@@ -173,6 +176,7 @@ export default function DigitalTrustPrototype() {
   }
 
   function finalizeAssessment() {
+    if (!selectedAsn) return;
     const summary = getAssessmentSummary(assessmentAnswers);
     setAsnList((current) =>
       current.map((item) =>
@@ -182,7 +186,7 @@ export default function DigitalTrustPrototype() {
               knowledge: summary.knowledge,
               attitude: summary.attitude,
               behavior: summary.behavior,
-              lastAssessment: new Date().toISOString().slice(0, 10),
+              lastAssessment: formatLocalDate(new Date()),
             })
           : item
       )
@@ -210,9 +214,9 @@ export default function DigitalTrustPrototype() {
 
     setLoginError("");
     setCurrentUser(user);
-    setCurrentAgency(user.role === "ASN" ? "BPAD Provinsi NTT" : "all");
+    setCurrentAgency(user.role === "ASN" ? user.agency : "all");
     setCurrentPage(user.role === "ASN" ? "assessment" : "dashboard");
-    setSelectedAsnId(getDefaultSelectedAsnIdForUser(user.role));
+    setSelectedAsnId(getDefaultSelectedAsnIdForUser(user));
     setShowPrototypeModal(true);
     setAsnTestStarted(false);
     setAsnQuestionIndex(0);
@@ -230,6 +234,7 @@ export default function DigitalTrustPrototype() {
   }
 
   function startAsnTest() {
+    if (!selectedAsn) return;
     setAssessmentAnswers({});
     setAsnQuestionIndex(0);
     setAsnTimeLeft(30);
@@ -487,7 +492,19 @@ export default function DigitalTrustPrototype() {
           )}
 
           {currentPage === "assessment" && isAsnRole && (
-            !asnTestStarted ? (
+            !selectedAsn ? (
+              <div className="panel">
+                <div className="panel-header">
+                  <div>
+                    <h2>Assessment Digital Trust</h2>
+                    <div className="panel-subtitle">Profil ASN untuk akun ini belum terhubung.</div>
+                  </div>
+                </div>
+                <div className="empty-state">
+                  Hubungi admin prototype untuk menghubungkan akun ASN ke data penilaian yang sesuai.
+                </div>
+              </div>
+            ) : !asnTestStarted ? (
               <div className="asn-test-layout">
                 <div className="panel">
                   <div className="panel-header">
@@ -576,7 +593,7 @@ export default function DigitalTrustPrototype() {
             )
           )}
 
-          {currentPage === "my-score" && (
+          {currentPage === "my-score" && selectedAsn && (
             <div className="detail-grid">
               <div className="panel">
                 <div className="detail-header">
@@ -606,6 +623,12 @@ export default function DigitalTrustPrototype() {
                   ))}
                 </div>
               </div>
+            </div>
+          )}
+
+          {currentPage === "my-score" && !selectedAsn && (
+            <div className="panel">
+              <div className="empty-state">Data nilai pribadi belum tersedia untuk akun ini.</div>
             </div>
           )}
 
@@ -920,7 +943,7 @@ function getAssessmentSummary(answers) {
 }
 
 function calculateSectionScore(key, answers) {
-  const values = QUESTION_SETS[key].map((_, index) => answers[`${key}-${index}`] || 3);
+  const values = QUESTION_SETS[key].map((_, index) => Number(answers[`${key}-${index}`] ?? 0));
   const total = values.reduce((sum, value) => sum + value, 0);
   return Math.round((total / (values.length * 5)) * 100);
 }
