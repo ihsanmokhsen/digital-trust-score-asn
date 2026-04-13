@@ -126,31 +126,49 @@ export default function DigitalTrustPrototype() {
   }, [asnQuestionIndex, asnTestStarted, asnTimeLeft, currentPage, isAsnRole]);
 
   useEffect(() => {
-    if (riskChartRef.current && !isAsnRole && currentPage === "dashboard") {
-      drawRiskDistributionChart(riskChartRef.current, stats);
-    }
-  }, [currentPage, isAsnRole, stats.highRisk, stats.mediumRisk, stats.lowRisk]);
+    if (!riskChartRef.current || isAsnRole || currentPage !== "dashboard") return undefined;
+    const frameId = window.requestAnimationFrame(() => {
+      if (riskChartRef.current) {
+        drawRiskDistributionChart(riskChartRef.current, stats);
+      }
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [currentPage, currentUser, isAsnRole, showPrototypeModal, stats.highRisk, stats.mediumRisk, stats.lowRisk]);
 
   useEffect(() => {
-    if (trendChartRef.current && !isAsnRole && currentPage === "dashboard") {
-      drawTrendChart(
-        trendChartRef.current,
-        currentAgency === "all" ? averageTrend() : TREND_BY_AGENCY[currentAgency]
-      );
-    }
-  }, [currentAgency, currentPage, isAsnRole]);
+    if (!trendChartRef.current || isAsnRole || currentPage !== "dashboard") return undefined;
+    const frameId = window.requestAnimationFrame(() => {
+      if (trendChartRef.current) {
+        drawTrendChart(
+          trendChartRef.current,
+          currentAgency === "all" ? averageTrend() : TREND_BY_AGENCY[currentAgency]
+        );
+      }
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [currentAgency, currentPage, currentUser, isAsnRole, showPrototypeModal]);
 
   useEffect(() => {
-    if (radarChartRef.current && selectedAsn && (currentPage === "my-score" || currentPage === "asn-list")) {
-      drawRadarChart(radarChartRef.current, selectedAsn);
+    if (!radarChartRef.current || !selectedAsn || (currentPage !== "my-score" && currentPage !== "asn-list")) {
+      return undefined;
     }
-  }, [currentPage, selectedAsn]);
+    const frameId = window.requestAnimationFrame(() => {
+      if (radarChartRef.current) {
+        drawRadarChart(radarChartRef.current, selectedAsn);
+      }
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [currentPage, selectedAsn, showPrototypeModal]);
 
   useEffect(() => {
-    if (agencyChartRef.current && !isAsnRole && currentPage === "analytics") {
-      drawAgencyChart(agencyChartRef.current, agencyScores);
-    }
-  }, [agencyScores, currentPage, isAsnRole]);
+    if (!agencyChartRef.current || isAsnRole || currentPage !== "analytics") return undefined;
+    const frameId = window.requestAnimationFrame(() => {
+      if (agencyChartRef.current) {
+        drawAgencyChart(agencyChartRef.current, agencyScores);
+      }
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [agencyScores, currentPage, isAsnRole, showPrototypeModal]);
 
   function averageTrend() {
     const entries = Object.values(TREND_BY_AGENCY);
@@ -195,6 +213,10 @@ export default function DigitalTrustPrototype() {
     setAsnQuestionIndex(0);
     setAsnTimeLeft(30);
     setCurrentPage(isAsnRole ? "my-score" : "asn-list");
+  }
+
+  function finalizeSimulation() {
+    setCurrentPage("dashboard");
   }
 
   function handleLogin(event) {
@@ -258,6 +280,7 @@ export default function DigitalTrustPrototype() {
               <span>Digital Trust Score ASN</span>
             </div>
             <div className="team-signature">prototype by do&apos;a ibu</div>
+            <div className="team-website">ihsanmokhsen.com</div>
             <h1>Digital Trust Score ASN</h1>
             <p>Platform Monitoring Perilaku Keamanan Informasi ASN</p>
             <p>Platform Pengukuran dan Monitoring Kesadaran Keamanan Data Pemerintah.</p>
@@ -314,6 +337,7 @@ export default function DigitalTrustPrototype() {
                 </li>
               </ul>
               <div className="team-signature subtle">do&apos;a ibu</div>
+              <div className="team-website subtle">ihsanmokhsen.com</div>
             </div>
           </section>
         </div>
@@ -333,6 +357,7 @@ export default function DigitalTrustPrototype() {
           </div>
           <div className="muted">Platform Monitoring Perilaku Keamanan Informasi ASN</div>
           <div className="team-signature subtle sidebar-signature">do&apos;a ibu</div>
+          <div className="team-website subtle">ihsanmokhsen.com</div>
           <nav className="nav-list">
             {availablePages.map(([page, label]) => (
               <button
@@ -414,7 +439,7 @@ export default function DigitalTrustPrototype() {
                   <div className="panel-header">
                     <div>
                       <h2>Top Risiko</h2>
-                      <div className="panel-subtitle">Area prioritas perbaikan awareness keamanan.</div>
+                      <div className="panel-subtitle">Simulasi area prioritas berbasis data dummy prototype.</div>
                     </div>
                   </div>
                   <div className="risk-list">
@@ -433,7 +458,7 @@ export default function DigitalTrustPrototype() {
                   <div className="panel-header">
                     <div>
                       <h2>Trend Awareness Keamanan</h2>
-                      <div className="panel-subtitle">7 periode monitoring terakhir untuk {getAgencyLabel()}.</div>
+                      <div className="panel-subtitle">Simulasi 7 periode monitoring untuk {getAgencyLabel()} berbasis data dummy.</div>
                     </div>
                   </div>
                   <canvas height="280" ref={trendChartRef} width="560" />
@@ -442,7 +467,7 @@ export default function DigitalTrustPrototype() {
                   <div className="panel-header">
                     <div>
                       <h2>Ringkasan Tindakan</h2>
-                      <div className="panel-subtitle">Intervensi cepat yang direkomendasikan untuk pimpinan instansi.</div>
+                      <div className="panel-subtitle">Contoh intervensi cepat untuk kebutuhan demo dan presentasi.</div>
                     </div>
                   </div>
                   <div className="activity-list">
@@ -470,21 +495,21 @@ export default function DigitalTrustPrototype() {
                 <div className="panel-header">
                   <div>
                     <h2>Assessment Digital Trust</h2>
-                    <div className="panel-subtitle">Kuesioner untuk instansi {getAgencyLabel()}.</div>
+                    <div className="panel-subtitle">Simulasi kuesioner untuk preview hasil assessment di {getAgencyLabel()}.</div>
                   </div>
                 </div>
                 <form
                   className="question-group"
                   onSubmit={(event) => {
                     event.preventDefault();
-                    finalizeAssessment();
+                    finalizeSimulation();
                   }}
                 >
                   <QuestionSection answers={assessmentAnswers} label="Pemahaman Keamanan" namePrefix="knowledge" onChange={setAssessmentAnswers} questions={QUESTION_SETS.knowledge} />
                   <QuestionSection answers={assessmentAnswers} label="Sikap Kepatuhan" namePrefix="attitude" onChange={setAssessmentAnswers} questions={QUESTION_SETS.attitude} />
                   <QuestionSection answers={assessmentAnswers} label="Perilaku Keamanan" namePrefix="behavior" onChange={setAssessmentAnswers} questions={QUESTION_SETS.behavior} />
-                  <button className="button" type="submit">Submit Assessment</button>
-                  <div className="form-note dark-note">Skor akan dihitung otomatis dan disimpan pada ASN terpilih di instansi aktif.</div>
+                  <button className="button" type="submit">Lihat Hasil Simulasi</button>
+                  <div className="form-note dark-note">Hasil pada panel kanan adalah simulasi untuk demo. Data ASN dan dashboard tidak diubah dari halaman ini.</div>
                 </form>
               </div>
               <AssessmentSidebar renderBadge={renderBadge} summary={assessmentSummary} />
@@ -723,7 +748,7 @@ export default function DigitalTrustPrototype() {
                 <div className="panel-header">
                   <div>
                     <h2>Analytics Antar Instansi</h2>
-                    <div className="panel-subtitle">Perbandingan 3 instansi contoh pada prototype.</div>
+                    <div className="panel-subtitle">Perbandingan 3 instansi contoh berbasis data dummy pada prototype.</div>
                   </div>
                 </div>
                 <canvas height="300" ref={agencyChartRef} width="560" />
